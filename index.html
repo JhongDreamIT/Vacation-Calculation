@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vacation Attendance Calculator | DreamIT ESL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Light Theme (Default Glass) */
+            --text-color: #050411;
+            --accent-color: rgba(0, 0, 0, 0.15);
+            --success-color: #10b981;
+            --danger-color: #e11d48;
+            
+            /* Glassmorphism Variables for Light Mode */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.1);
+            --header-bg: rgba(255, 255, 255, 0.9);
+
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Syne', sans-serif;
+            --transition-smooth: cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Glass */
+            --text-color: #ffffff;
+            --accent-color: rgba(255, 255, 255, 0.15);
+            --success-color: #34d399;
+            --danger-color: #fb7185;
+
+            /* Glassmorphism Variables for Dark Mode */
+            --glass-bg: rgba(15, 15, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            --header-bg: rgba(15, 15, 20, 0.85);
+        }
+
+        /* OVERRIDE: Error State Variables (Triggers when Midterm is Missed) */
+        body.error-mode {
+            --glass-border: rgba(225, 29, 72, 0.6);
+            --glass-shadow: 0 12px 40px 0 rgba(225, 29, 72, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: #000; 
+            color: var(--text-color);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            cursor: none; 
+            transition: color 0.8s var(--transition-smooth);
+            line-height: 1.6;
+            width: 100%;
+        }
+
+        .video-background {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: -10;
+            overflow: hidden;
+            pointer-events: none;
+            background-color: #000;
+        }
+
+        .video-background video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center; 
+            transition: opacity 0.5s linear;
+        }
+
+        #bg-video-top { opacity: 1; }
+        #bg-video-bottom { opacity: 0; }
+
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45);
+            transition: background-color 0.8s var(--transition-smooth);
+            pointer-events: none;
+        }
+        
+        body:not([data-theme="dark"]) .video-overlay {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Error Mode Overlay Glow */
+        body.error-mode .video-overlay {
+            background-color: rgba(159, 18, 57, 0.45) !important;
+        }
+
+        .cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background-color: var(--text-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s var(--transition-smooth), height 0.3s var(--transition-smooth), background-color 0.3s var(--transition-smooth);
+            mix-blend-mode: difference;
+        }
+        .cursor.hovering { width: 60px; height: 60px; background-color: #fff; }
+
+        h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; word-break: normal; overflow-wrap: normal; }
+        a, button, input {
+            text-decoration: none;
+            color: inherit;
+            font-family: inherit;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, a { cursor: none; background: none; border: none; }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 2rem 5vw; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            transition: all 0.5s ease;
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        header.scrolled {
+            padding: 1.2rem 5vw;
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-color);
+        }
+
+        .logo {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            font-family: var(--font-display);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        header.scrolled .logo { text-shadow: none; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 5vw; 
+            width: 100%;
+        }
+        
+        #content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4rem, 8vw, 6rem);
+            padding-bottom: 6rem;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: clamp(2rem, 5vw, 4rem);
+            box-shadow: var(--glass-shadow);
+            transition: background 0.8s var(--transition-smooth), border-color 0.8s var(--transition-smooth), box-shadow 0.8s var(--transition-smooth);
+            width: 100%;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .glass-input-wrapper { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+        .glass-input-wrapper label { font-size: 1.1rem; font-weight: 600; font-family: var(--font-display); }
+
+        .glass-input {
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            transition: all 0.8s var(--transition-smooth);
+            cursor: none;
+        }
+        [data-theme="light"] .glass-input { background: rgba(0, 0, 0, 0.02); }
+        .glass-input:focus {
+            border-color: var(--text-color);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-calendar-picker-indicator { cursor: none; filter: invert(0.5); }
+        [data-theme="dark"] ::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s var(--transition-smooth), transform 1s var(--transition-smooth);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .hero {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+            padding-top: 8rem;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            text-shadow: 0 4px 24px rgba(0,0,0,0.7); 
+            color: #ffffff;
+            width: 100%;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 6.5rem);
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .hero-text-line { overflow: hidden; display: block; padding-bottom: 0.1em; }
+        .hero-text-line span {
+            display: block;
+            transform: translateY(100%);
+            animation: slideUp 1s var(--transition-smooth) forwards;
+        }
+        .hero-text-line:nth-child(2) span { animation-delay: 0.15s; }
+        @keyframes slideUp { to { transform: translateY(0); } }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2.5rem;
+            animation: fadeIn 1.2s ease forwards 0.4s;
+            opacity: 0;
+            max-width: 600px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+            line-height: 1.5;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .section-header {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+        .section-sub { font-size: 1.1rem; opacity: 0.8; margin-bottom: 2rem; max-width: 100%; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+        
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            padding: 2rem 1.5rem;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            height: 100%;
+            min-height: 180px;
+            transition: transform 0.6s var(--transition-smooth), border-color 0.8s var(--transition-smooth), box-shadow 0.8s var(--transition-smooth);
+            box-shadow: var(--glass-shadow);
+            cursor: none;
+            width: 100%;
+        }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--text-color); transform: scaleY(0); transform-origin: bottom;
+            transition: transform 0.5s var(--transition-smooth); z-index: 0;
+        }
+        .card:hover, .card.active { transform: translateY(-8px); border-color: var(--text-color); }
+        .card:hover::before, .card.active::before { transform: scaleY(1); }
+        
+        .card-content { position: relative; z-index: 1; transition: color 0.3s ease; width: 100%; }
+        .card:hover .card-content, .card.active .card-content { color: var(--glass-bg); }
+        
+        .card-amount {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+        .card:hover .card-amount, .card.active .card-amount { color: var(--glass-bg); }
+        .card-desc { font-size: 1.05rem; font-weight: 500; opacity: 0.9; line-height: 1.4; }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: clamp(2rem, 5vw, 4rem);
+            width: 100%;
+        }
+        .action-text {
+            font-size: clamp(2.2rem, 6vw, 4.5rem);
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            word-break: normal;
+            overflow-wrap: normal;
+            transition: color 0.4s ease;
+        }
+        .action-success { color: var(--success-color); }
+        .action-error { color: var(--danger-color); }
+
+        .deadline-text { font-size: clamp(1rem, 3vw, 1.25rem); opacity: 0.8; font-weight: 500; line-height: 1.4; }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: clamp(2rem, 6vw, 4rem);
+            width: 100%;
+        }
+
+        .math-breakdown, .final-checklist { display: flex; flex-direction: column; gap: 1rem; width: 100%; transition: opacity 0.4s ease; }
+        .dashboard-title { font-size: 1.5rem; font-family: var(--font-display); border-bottom: 1px solid var(--text-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        
+        .math-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            font-size: 1.1rem;
+            border-bottom: 1px dashed var(--accent-color);
+            line-height: 1.4;
+        }
+        .math-row span {
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .math-row span:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+        .math-row.total {
+            font-weight: 700;
+            font-size: 1.5rem;
+            font-family: var(--font-display);
+            border-bottom: none;
+            border-top: 2px solid var(--text-color);
+            margin-top: 0.5rem;
+            padding-top: 1.5rem;
+        }
+        .math-row.total span:last-child { font-weight: 800; }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start; 
+            gap: 1.25rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--accent-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: none;
+            line-height: 1.4;
+            width: 100%;
+        }
+        .checklist-box {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--text-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0; 
+            margin-top: 2px; 
+        }
+        .checklist-box.checked { background: var(--text-color); border-color: var(--text-color); }
+        .checklist-box.checked::after { content: '✓'; color: var(--glass-bg); font-weight: 800; }
+        .checklist-text { flex: 1; }
+
+        @media (max-width: 768px) {
+            header { padding: 1.5rem 5vw; }
+            header.scrolled { padding: 1rem 5vw; }
+            .hero { padding-top: 7rem; text-align: center; align-items: center; }
+            .hero-content { display: flex; flex-direction: column; align-items: center; }
+            .hero h1, .hero-subtitle { margin-left: auto; margin-right: auto; }
+            .cursor { display: none !important; }
+            body, a, button, input, .checklist-item, .card, ::-webkit-calendar-picker-indicator { cursor: auto; }
+            
+            .math-row span { min-width: 100%; text-align: left !important; }
+            .math-row span:last-child { margin-top: -0.5rem; opacity: 0.9; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="video-background">
+        <video id="bg-video-top" autoplay loop muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-mountain-in-the-winter-40019-large.mp4" type="video/mp4">
+        </video>
+        <video id="bg-video-bottom" autoplay loop muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-beautiful-coastline-of-a-greek-island-4254-large.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <div class="cursor" id="custom-cursor"></div>
+
+    <header id="main-header">
+        <div class="logo">DreamIT ESL</div>
+        <div style="font-weight: 600; opacity: 0.8; font-size: clamp(0.8rem, 2vw, 0.9rem);">Internal System</div>
+    </header>
+
+    <main id="content-wrapper">
+        
+        <section class="hero container">
+            <div class="hero-content">
+                <h1>
+                    <span class="hero-text-line"><span>Plan your vacation.</span></span>
+                    <span class="hero-text-line"><span>Simply.</span></span>
+                </h1>
+                <p class="hero-subtitle">Calculate exactly how many classes you need to hit the 35% attendance requirement by your 12th-week deadline.</p>
+            </div>
+        </section>
+
+        <section class="container reveal" data-theme-trigger="light">
+            <div class="glass-panel">
+                <h2 class="section-header">Term Details</h2>
+                <p class="section-sub">Enter your semester start date and current attendance to begin calculations.</p>
+                
+                <div class="input-grid">
+                    <div class="glass-input-wrapper hover-target">
+                        <label for="startDate">Semester Start Date</label>
+                        <input type="date" id="startDate" class="glass-input hover-target" onchange="calculatePlan()">
+                    </div>
+                    <div class="glass-input-wrapper hover-target">
+                        <label for="currentAttendance">Current Attendance (%)</label>
+                        <input type="number" id="currentAttendance" class="glass-input hover-target" placeholder="e.g. 15.5" step="0.1" min="0" max="100" oninput="calculatePlan()">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container reveal" data-theme-trigger="dark">
+            <div style="text-align: center;">
+                <h2 class="section-header">Class Schedule</h2>
+                <p class="section-sub">Select your program format to determine class value.</p>
+            </div>
+            
+            <div class="grid" id="scheduleOptions">
+                <button class="card hover-target" onclick="selectSchedule(this, 1.5)">
+                    <div class="card-content">
+                        <div class="card-amount">1.5%</div>
+                        <div class="card-desc">Mon - Thu (Evening)</div>
+                    </div>
+                </button>
+                <button class="card hover-target" onclick="selectSchedule(this, 2.0)">
+                    <div class="card-content">
+                        <div class="card-amount">2.0%</div>
+                        <div class="card-desc">Mon - Wed (Morning)</div>
+                    </div>
+                </button>
+                <button class="card hover-target" onclick="selectSchedule(this, 3.0)">
+                    <div class="card-content">
+                        <div class="card-amount">3.0%</div>
+                        <div class="card-desc">Thu - Fri (Weekday)</div>
+                    </div>
+                </button>
+                <button class="card hover-target" onclick="selectSchedule(this, 3.0)">
+                    <div class="card-content">
+                        <div class="card-amount">3.0%</div>
+                        <div class="card-desc">Sat - Sun (Weekend)</div>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <section class="container reveal" data-theme-trigger="light">
+            <div class="glass-panel">
+                <h2 class="section-header">Midterm Exam</h2>
+                <p class="section-sub">The midterm is worth 6%. Have you taken it yet?</p>
+                
+                <div class="grid" id="midtermOptions">
+                    <button class="card hover-target active" onclick="selectMidterm(this, 'upcoming')">
+                        <div class="card-content">
+                            <div class="card-amount">Upcoming</div>
+                            <div class="card-desc">Will add 6% later</div>
+                        </div>
+                    </button>
+                    <button class="card hover-target" onclick="selectMidterm(this, 'taken')">
+                        <div class="card-content">
+                            <div class="card-amount">Taken</div>
+                            <div class="card-desc">Already in my current %</div>
+                        </div>
+                    </button>
+                    <button class="card hover-target" onclick="selectMidterm(this, 'missed')">
+                        <div class="card-content">
+                            <div class="card-amount" style="color: var(--danger-color);">Missed</div>
+                            <div class="card-desc">Lost the 6% bonus</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="container reveal" id="resultsSection" data-theme-trigger="dark" style="display: none;">
+            <div class="glass-panel">
+                <div class="results-header">
+                    <div id="actionText" class="action-text">Fill inputs above</div>
+                    <div id="deadlineText" class="deadline-text"></div>
+                </div>
+
+                <div class="results-grid" id="resultsData">
+                    <!-- Math Breakdown -->
+                    <div class="math-breakdown">
+                        <h3 class="dashboard-title">Math Breakdown</h3>
+                        <div class="math-row">
+                            <span>Vacation Goal</span>
+                            <span>35.0%</span>
+                        </div>
+                        <div class="math-row">
+                            <span>Minus Current Attendance</span>
+                            <span id="mathCurrent">- 0.0%</span>
+                        </div>
+                        <div class="math-row" id="mathMidtermRow">
+                            <span id="mathMidtermLabel">Minus Upcoming Midterm</span>
+                            <span id="mathMidtermVal">- 6.0%</span>
+                        </div>
+                        <div class="math-row total">
+                            <span>Deficit to Fill:</span>
+                            <span id="mathDeficit">0.0%</span>
+                        </div>
+                        <div class="math-row" id="mathClassRow" style="border:none; opacity: 0.8; font-size: 1rem; margin-top: 1rem;">
+                            <span id="mathClassLabel">Divided by class value (0%):</span>
+                            <span id="mathClasses">0 classes</span>
+                        </div>
+                    </div>
+
+                    <!-- Final Checklist -->
+                    <div class="final-checklist">
+                        <h3 class="dashboard-title">Final Checklist</h3>
+                        
+                        <div class="checklist-item hover-target" onclick="toggleCheck(this)">
+                            <div class="checklist-box hover-target" id="checkAttendance"></div>
+                            <span class="checklist-text">Achieve 35% attendance by deadline</span>
+                        </div>
+                        <div class="checklist-item hover-target" onclick="toggleCheck(this)">
+                            <div class="checklist-box hover-target"></div>
+                            <span class="checklist-text">Tuition paid in full</span>
+                        </div>
+                        <div class="checklist-item hover-target" onclick="toggleCheck(this)">
+                            <div class="checklist-box hover-target"></div>
+                            <span class="checklist-text">$500 deposit paid for next term</span>
+                        </div>
+                        <div class="checklist-item hover-target" onclick="toggleCheck(this)">
+                            <div class="checklist-box hover-target"></div>
+                            <span class="checklist-text">All tests and quizzes taken</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const dotCursor = document.getElementById('custom-cursor');
+        if (window.matchMedia("(pointer: fine)").matches) {
+            document.addEventListener('mousemove', (e) => {
+                dotCursor.style.left = e.clientX + 'px';
+                dotCursor.style.top = e.clientY + 'px';
+            });
+            function attachHoverEvents() {
+                document.querySelectorAll('.hover-target, button, input').forEach(target => {
+                    target.addEventListener('mouseenter', () => dotCursor.classList.add('hovering'));
+                    target.addEventListener('mouseleave', () => dotCursor.classList.remove('hovering'));
+                });
+            }
+            attachHoverEvents();
+        } else {
+            function attachHoverEvents() {} 
+        }
+
+        const header = document.getElementById('main-header');
+        const topVideo = document.getElementById('bg-video-top');
+        const bottomVideo = document.getElementById('bg-video-bottom');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            let scrollPercent = docHeight > 0 ? scrollTop / docHeight : 0;
+            
+            topVideo.style.opacity = 1 - scrollPercent;
+            bottomVideo.style.opacity = scrollPercent;
+        });
+
+        const revealOptions = { threshold: 0.15, rootMargin: "0px 0px -50px 0px" };
+        const revealOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target);
+            });
+        }, revealOptions);
+        document.querySelectorAll('.reveal').forEach(el => revealOnScroll.observe(el));
+
+        const themeTriggers = document.querySelectorAll('[data-theme-trigger]');
+        const body = document.body;
+        const themeObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const theme = entry.target.getAttribute('data-theme-trigger');
+                    if (theme === 'light') body.removeAttribute('data-theme');
+                    else body.setAttribute('data-theme', 'dark');
+                }
+            });
+        }, { threshold: 0.4 });
+        themeTriggers.forEach(trigger => themeObserver.observe(trigger));
+
+        let selectedClassValue = null;
+        let selectedMidtermStatus = 'upcoming';
+
+        function selectSchedule(element, value) {
+            document.querySelectorAll('#scheduleOptions .card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            selectedClassValue = value;
+            calculatePlan();
+        }
+
+        function selectMidterm(element, status) {
+            document.querySelectorAll('#midtermOptions .card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            selectedMidtermStatus = status;
+            
+            // Toggle Error Mode CSS
+            if (status === 'missed') {
+                document.body.classList.add('error-mode');
+            } else {
+                document.body.classList.remove('error-mode');
+            }
+            
+            calculatePlan();
+        }
+
+        function toggleCheck(element) {
+            const box = element.querySelector('.checklist-box');
+            if(box.id !== 'checkAttendance') { 
+                box.classList.toggle('checked');
+            }
+        }
+
+        function calculatePlan() {
+            const startDateStr = document.getElementById('startDate').value;
+            const currentAttendanceInput = document.getElementById('currentAttendance').value;
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsData = document.getElementById('resultsData');
+            let actionText = document.getElementById('actionText');
+            let deadlineText = document.getElementById('deadlineText');
+
+            // ERROR STATE BYPASS: Show immediately if midterm is missed
+            if (selectedMidtermStatus === 'missed') {
+                resultsSection.style.display = 'block';
+                setTimeout(() => resultsSection.classList.add('active'), 50);
+                
+                actionText.innerText = "Error - Missing Exam";
+                actionText.className = "action-text action-error";
+                deadlineText.innerText = "The midterm exam is mandatory. You do not qualify for a vacation without taking it. Please contact administration immediately.";
+                resultsData.style.display = 'none'; // Hide math blocks entirely
+                attachHoverEvents();
+                return;
+            } else {
+                resultsData.style.display = 'grid'; // Restore math blocks
+            }
+
+            // Normal Gatekeeper
+            if (!startDateStr || currentAttendanceInput === '' || !selectedClassValue) {
+                resultsSection.style.display = 'none';
+                return;
+            }
+
+            // Ensure section is visible
+            if (resultsSection.style.display === 'none') {
+                resultsSection.style.display = 'block';
+                setTimeout(() => resultsSection.classList.add('active'), 50); 
+                attachHoverEvents();
+            }
+
+            let currentAttendance = parseFloat(currentAttendanceInput) || 0;
+
+            // Calculate Deadline
+            let [year, month, day] = startDateStr.split('-');
+            let startDate = new Date(year, month - 1, day);
+            let deadlineDate = new Date(startDate.getTime() + (83 * 24 * 60 * 60 * 1000));
+            
+            let dayOfWeek = deadlineDate.getDay();
+            if (dayOfWeek !== 0) {
+                let daysUntilSunday = 7 - dayOfWeek;
+                deadlineDate.setDate(deadlineDate.getDate() + daysUntilSunday);
+            }
+            
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDeadline = deadlineDate.toLocaleDateString('en-US', dateOptions);
+
+            // Execute Math
+            let target = 35.0;
+            let midtermBonus = (selectedMidtermStatus === 'upcoming') ? 6.0 : 0.0;
+            let deficit = target - currentAttendance - midtermBonus;
+            
+            document.getElementById('mathCurrent').innerText = `- ${currentAttendance.toFixed(1)}%`;
+            
+            let midtermRow = document.getElementById('mathMidtermRow');
+            let midtermLabel = document.getElementById('mathMidtermLabel');
+            let midtermVal = document.getElementById('mathMidtermVal');
+
+            if (selectedMidtermStatus === 'upcoming') {
+                midtermRow.style.display = 'flex';
+                midtermLabel.innerText = "Minus Upcoming Midterm";
+                midtermVal.innerText = "- 6.0%";
+            } else {
+                midtermRow.style.display = 'none'; 
+            }
+
+            let checkAttendance = document.getElementById('checkAttendance');
+            let mathDeficitUI = document.getElementById('mathDeficit');
+            let mathClassRow = document.getElementById('mathClassRow');
+
+            if (deficit <= 0) {
+                actionText.innerText = "Qualify for Vacation!";
+                actionText.className = "action-text action-success";
+                
+                if (selectedMidtermStatus === 'upcoming' && (currentAttendance < 35.0)) {
+                    deadlineText.innerText = `Track maintained. Don't forget your midterm by ${formattedDeadline}.`;
+                    checkAttendance.classList.remove('checked');
+                } else {
+                    deadlineText.innerText = `Requirement met ahead of ${formattedDeadline}.`;
+                    checkAttendance.classList.add('checked');
+                }
+                
+                mathDeficitUI.innerText = "0.0%";
+                mathClassRow.style.display = 'none';
+            } else {
+                let classesNeeded = Math.ceil(deficit / selectedClassValue);
+                
+                actionText.innerText = `${classesNeeded} Classes Needed`;
+                actionText.className = "action-text";
+                deadlineText.innerText = `Must be attended before ${formattedDeadline}`;
+                checkAttendance.classList.remove('checked');
+                
+                mathDeficitUI.innerText = `${deficit.toFixed(1)}%`;
+                mathClassRow.style.display = 'flex';
+                document.getElementById('mathClassLabel').innerText = `Divided by class value (${selectedClassValue.toFixed(1)}%):`;
+                document.getElementById('mathClasses').innerText = `${classesNeeded} classes`;
+            }
+        }
+    </script>
+</body>
+</html>
