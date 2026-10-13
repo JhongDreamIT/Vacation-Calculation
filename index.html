@@ -52,8 +52,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            word-break: normal;
-            overflow-wrap: normal;
         }
 
         body {
@@ -129,7 +127,7 @@
         }
         .cursor.hovering { width: 60px; height: 60px; background-color: #fff; }
 
-        h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; word-break: normal; overflow-wrap: normal; }
+        h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; }
         a, button, input {
             text-decoration: none;
             color: inherit;
@@ -292,7 +290,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
             width: 100%;
         }
@@ -302,7 +300,7 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            padding: 2rem 1.5rem;
+            padding: 2rem 0.85rem;
             border-radius: 20px;
             position: relative;
             overflow: hidden;
@@ -331,13 +329,15 @@
         
         .card-amount {
             font-family: var(--font-display);
-            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            font-size: clamp(1.1rem, 3.2vw, 2.2rem);
             font-weight: 800;
-            letter-spacing: -1px;
+            letter-spacing: -0.8px;
             margin-bottom: 0.5rem;
             transition: color 0.3s ease;
-            word-break: normal;
-            overflow-wrap: normal;
+            white-space: nowrap;
+            width: 100%;
+            line-height: 1.2;
+            padding: 0.1em 0;
         }
         .card:hover .card-amount, .card.active .card-amount { color: var(--glass-bg); }
         .card-desc { font-size: 1.05rem; font-weight: 500; opacity: 0.9; line-height: 1.4; }
@@ -355,8 +355,6 @@
             line-height: 1.25;
             padding-bottom: 0.1em;
             margin-bottom: 1rem;
-            word-break: normal;
-            overflow-wrap: normal;
             transition: color 0.4s ease;
         }
         .action-success { color: var(--success-color); }
