@@ -1,3 +1,16 @@
+Here is the updated code incorporating the check for past deadlines when attendance is under 35%.
+
+### What Was Updated in JavaScript (`calculatePlan`):
+
+1. **Past Deadline Check:** Compares `deadlineDate` with today's current date (`new Date()`).
+2. **Logic Trigger:** If the deadline has already passed AND the current attendance (plus any midterm bonus if upcoming) is **less than 35.0%**, the tool displays:
+* **Main Heading:** `"Not Eligible for Vacation"` (formatted in red error style).
+* **Subtext:** `"The 12th-week deadline of [Deadline Date] has passed and your attendance is below 35%."`
+* **Math Breakdown & Checklist Adjustments:** Shows deficit math clearly while unticking/marking the requirement checklist as incomplete.
+
+
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,7 +55,7 @@
             --header-bg: rgba(15, 15, 20, 0.85);
         }
 
-        /* OVERRIDE: Error State Variables (Triggers when Midterm is Missed) */
+        /* OVERRIDE: Error State Variables (Triggers when Midterm is Missed or Deadline Passed) */
         body.error-mode {
             --glass-border: rgba(225, 29, 72, 0.6);
             --glass-shadow: 0 12px 40px 0 rgba(225, 29, 72, 0.25);
@@ -782,7 +795,21 @@
             let mathDeficitUI = document.getElementById('mathDeficit');
             let mathClassRow = document.getElementById('mathClassRow');
 
-            if (deficit <= 0) {
+            // Date Check (Has deadline passed?)
+            const now = new Date();
+            const isDeadlinePassed = now > deadlineDate;
+
+            if (isDeadlinePassed && deficit > 0) {
+                actionText.innerText = "Not Eligible for Vacation";
+                actionText.className = "action-text action-error";
+                deadlineText.innerText = `The 12th-week deadline of ${formattedDeadline} has passed and your attendance is below 35%.`;
+                document.body.classList.add('error-mode');
+                checkAttendance.classList.remove('checked');
+
+                mathDeficitUI.innerText = `${deficit.toFixed(1)}%`;
+                mathClassRow.style.display = 'none';
+            } else if (deficit <= 0) {
+                document.body.classList.remove('error-mode');
                 actionText.innerText = "Qualify for Vacation!";
                 actionText.className = "action-text action-success";
                 
@@ -797,6 +824,7 @@
                 mathDeficitUI.innerText = "0.0%";
                 mathClassRow.style.display = 'none';
             } else {
+                document.body.classList.remove('error-mode');
                 let classesNeeded = Math.ceil(deficit / selectedClassValue);
                 
                 actionText.innerText = `${classesNeeded} Classes Needed`;
@@ -813,3 +841,5 @@
     </script>
 </body>
 </html>
+
+```
