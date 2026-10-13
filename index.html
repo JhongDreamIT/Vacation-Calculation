@@ -1,16 +1,3 @@
-Here is the updated code incorporating the check for past deadlines when attendance is under 35%.
-
-### What Was Updated in JavaScript (`calculatePlan`):
-
-1. **Past Deadline Check:** Compares `deadlineDate` with today's current date (`new Date()`).
-2. **Logic Trigger:** If the deadline has already passed AND the current attendance (plus any midterm bonus if upcoming) is **less than 35.0%**, the tool displays:
-* **Main Heading:** `"Not Eligible for Vacation"` (formatted in red error style).
-* **Subtext:** `"The 12th-week deadline of [Deadline Date] has passed and your attendance is below 35%."`
-* **Math Breakdown & Checklist Adjustments:** Shows deficit math clearly while unticking/marking the requirement checklist as incomplete.
-
-
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -841,5 +828,3 @@ Here is the updated code incorporating the check for past deadlines when attenda
     </script>
 </body>
 </html>
-
-```
